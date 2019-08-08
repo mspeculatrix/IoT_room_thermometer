@@ -10,7 +10,8 @@
 // an extra reset switch.
 #define PCB_REVISION 1.1
 // This string is used to identify each thermometer when communicating
-// with the REST server.
+// with the REST server. Choose whatever you want so long as it's unique
+// for each device and the server knows what to do with it.
 #define SENSOR_NAME "DHT22_3"
 
 #include <ESP8266WiFi.h>
