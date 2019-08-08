@@ -275,7 +275,12 @@ void wifiConnect() {
 // --- HTTP FUNCTIONS                                                                  ---
 // ---------------------------------------------------------------------------------------
 void getDateTime(DatetimeInfo option) {
-  // make a request to the REST API server for the current time or date
+  // make a request to the REST API server for the current time or date. We expect to get
+  // the data back as a string that is already formatted, so all we have to do is show
+  // the string on the LCD display. The API server, therefore, handles all formatting
+  // operations.
+  // The parameter to this function decides whether we ask the server for a date
+  // or a time string.
   String getRequest = String(HTTP_SERVER) + "?func=";
   if (option == TIME_INFO) {
     getRequest += "timereq";
@@ -296,6 +301,7 @@ void getDateTime(DatetimeInfo option) {
       printDate();
     }
   } else {
+    // didn't get 200 response
     printError("Error contacting server");
     timeStr = "--:--";
     dateStr = "-";
@@ -304,7 +310,9 @@ void getDateTime(DatetimeInfo option) {
 }
 
 void getWeather() {
-  // make a request to the REST API server for the current weather in my local town
+  // make a request to the REST API server for the current weather in my local town.
+  // This expects a string with all formatting handled by the server - so we just
+  // receive and display a simple string.
   String getRequest = String(HTTP_SERVER) + "?func=weather";
   http.begin(getRequest);
   int httpResponseCode = http.GET(); // See here for list of possible responses: https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPClient/src/ESP8266HTTPClient.h#L45
@@ -317,7 +325,8 @@ void getWeather() {
 }
 
 void sendDataReport() {
-  // send info to the REST API server
+  // send info to the REST API server. This could be logged, displayed on the intranet
+  // web server or thrown away - your choice.
   String getRequest = String(HTTP_SERVER) + "?func=report&sensor=" + String(SENSOR_NAME);
   getRequest += "&data=" + dataString(DATA_FMT_REPORT);
   http.begin(getRequest);
