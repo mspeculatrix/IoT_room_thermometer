@@ -1,17 +1,17 @@
-// ESP8266 temp module - HTTP version
+// ESP8266-based IoT room thermometer - HTTP version
+// For more information, go to: https://mansfield-devine.com/speculatrix/category/projects/iot-thermometer/
 
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
 
 // *** SET FOR EACH DEVICE ***
+// I designed a PCB for this project. There are two versions, rev 1.1 having
+// an extra reset switch.
 #define PCB_REVISION 1.1
+// This string is used to identify each thermometer when communicating
+// with the REST server.
 #define SENSOR_NAME "DHT22_3"
-// Sensor names used:
-//    Name    PCB revision
-//    DHT22_1 v1.0  office
-//    DHT22_2 v1.1  Trish's 
-// ---------------------------
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -57,7 +57,7 @@ typedef enum {DATA_FMT_SCREEN, DATA_FMT_REPORT} DataFormat;
 #define CF_URWG_72 &URW_Gothic_L_Book_72
 #define CF_URWG_96 &URW_Gothic_L_Book_96
 
-#define SENSOR_DATA_YPOS  95
+#define SENSOR_DATA_YPOS  95      // screen positions, in pixels
 #define TIME_YPOS         125
 #define DATE_YPOS         200
 #define ERR_YPOS          280
@@ -82,6 +82,7 @@ String network = "--";
 IPAddress ip;
 
 // --- HTTP CLIENT ------------------------------------------------------------------------
+// This is my intranet server, which is running a REST API. You'll need one of these.
 #define HTTP_SERVER "http://10.0.0.159/iotServer.php"
 typedef enum {TIME_INFO, DATE_INFO} DatetimeInfo;
 HTTPClient http;
@@ -91,13 +92,14 @@ HTTPClient http;
 #define REFRESH_PIN 16  // pin used for resetting the min/max values and maybe other things.
 #define DHTTYPE DHT22
 DHT dht(DHTPIN, DHTTYPE);
-float humidity = 50.0;
-float temp_float = 20.0;
+float humidity = 50.0;              // arbitrary initial settings. To be overwritten
+float temp_float = 20.0;            // once we get going.
 int8_t temp_int = int(temp_float);
 int8_t temp_max = -99;
 int8_t temp_min = 99;
 
 // --- INFO ------------------------------------------------------------------------------
+// These strings will be set by info coming from the REST API server.
 String timeStr = "--:--";
 String dateStr = "-";
 String weatherStr = "";
@@ -237,7 +239,7 @@ void getReadings() {
 void wifiConnect() {
   uint8_t ssid_idx = 0;
   uint8_t connect_counter = 0;
-  network = "--"; // reset
+  network = "--";                                 // reset
   tft.setTextColor(TFT_CYAN);
   tft.fillScreen(BG_COLOUR);
   tft.setCursor(0,20);
@@ -245,7 +247,7 @@ void wifiConnect() {
   tft.println("Montcocher IoT");
   tft.println("Connecting to wifi...");
   while (connect_counter < WIFI_MAX_TRIES) {
-    WiFi.begin(ssid[ssid_idx], HOME_WIFI_PW);  // try to connect
+    WiFi.begin(ssid[ssid_idx], HOME_WIFI_PW);     // try to connect
     tft.print("- trying: "); tft.println(ssid[ssid_idx]);
     // delay to allow time for connection
     delay(5000);
@@ -273,6 +275,7 @@ void wifiConnect() {
 // --- HTTP FUNCTIONS                                                                  ---
 // ---------------------------------------------------------------------------------------
 void getDateTime(DatetimeInfo option) {
+  // make a request to the REST API server for the current time or date
   String getRequest = String(HTTP_SERVER) + "?func=";
   if (option == TIME_INFO) {
     getRequest += "timereq";
@@ -301,6 +304,7 @@ void getDateTime(DatetimeInfo option) {
 }
 
 void getWeather() {
+  // make a request to the REST API server for the current weather in my local town
   String getRequest = String(HTTP_SERVER) + "?func=weather";
   http.begin(getRequest);
   int httpResponseCode = http.GET(); // See here for list of possible responses: https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPClient/src/ESP8266HTTPClient.h#L45
@@ -313,6 +317,7 @@ void getWeather() {
 }
 
 void sendDataReport() {
+  // send info to the REST API server
   String getRequest = String(HTTP_SERVER) + "?func=report&sensor=" + String(SENSOR_NAME);
   getRequest += "&data=" + dataString(DATA_FMT_REPORT);
   http.begin(getRequest);
@@ -340,7 +345,7 @@ void setup() {
   dht.begin();
   pinMode(REFRESH_PIN, INPUT);
   wifiConnect();
-  printMsg("Hello world");
+  printMsg("Hello world");    // why not?
 }
 
 // ***************************************************************************************
@@ -399,6 +404,7 @@ void loop() {
   }
 
   if(PCB_REVISION > 1.0) {
+    // the later boards have a reset button that clears the min/max settings
     refreshPinState = digitalRead(REFRESH_PIN);
     if(refreshPinState == LOW) {
       temp_min = 99;
