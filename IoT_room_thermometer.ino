@@ -1,6 +1,13 @@
-// ESP8266-based IoT room thermometer - HTTP version
-// For more information, go to: https://mansfield-devine.com/speculatrix/category/projects/iot-thermometer/
+/*  ESP8266-based IoT room thermometer - HTTP version
+    Based on Adafruit Huzzah ESP8266 board (not the Feather version)
+    but would probably work with other 8266 boards.
 
+    Communicates with a REST API running on an intranet server.
+
+    Uses an SPI-based TFT display.
+
+    For more information, go to: https://mansfield-devine.com/speculatrix/category/projects/iot-thermometer/
+*/
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
@@ -12,7 +19,7 @@
 // This string is used to identify each thermometer when communicating
 // with the REST server. Choose whatever you want so long as it's unique
 // for each device and the server knows what to do with it.
-#define SENSOR_NAME "DHT22_3"
+#define SENSOR_NAME "DHT22_2"
 
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -27,7 +34,7 @@
 // #define HOME_WIFI_AP_MAIN "YourMainSSID"
 // #define HOME_WIFI_AP_ALT "Your2ndSSID"
 // #define HOME_WIFI_PW "YourWifiPassword"
-#include <HomeWifi.h>
+#include "wifi-credentials.h"
 
 #include "Adafruit_Sensor.h"      // both of these libraries are from Adafruit
 #include "DHT.h"
@@ -84,7 +91,7 @@ IPAddress ip;
 
 // --- HTTP CLIENT ------------------------------------------------------------------------
 // This is my intranet server, which is running a REST API. You'll need one of these.
-#define HTTP_SERVER "http://10.0.0.159/iotServer.php"
+#define HTTP_SERVER "http://10.0.1.59/iotServer.php"
 typedef enum {TIME_INFO, DATE_INFO} DatetimeInfo;
 HTTPClient http;
 
@@ -349,8 +356,8 @@ void sendDataReport() {
 void setup() {
   tft.begin();
   // set orientation of screen.
-  // 0  - vertical, with wide area/pins at bottom
-  // 2  - vertical, with wide area/pins at top
+  // 0  - vertical, with wide bezel/pins at bottom
+  // 2  - vertical, with wide bezel/pins at top
   tft.setRotation(0);
   dht.begin();
   pinMode(REFRESH_PIN, INPUT);
